@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"os"
 	"strconv"		//used for any conversion between string and ints
 )
 
@@ -21,7 +22,9 @@ var (
 
 	content = []string{"sports", "entertainment", "business", "education"}
 
-	contentMap = make(map[string]counters)	//data structure to hold counters as values and data content as key.
+	counterMap = make(map[string]counters)	//data structure to hold counters as values and data content as key.
+
+	timeaccess = time.Now()	//get current time
 )
 
 func welcomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +51,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 		processClick(data)
 	}
 
-	printMapContents()	// to track current contents in map ( will remove once data store is implemented)
+	uploadCounters()	// to track current contents in map ( will remove once data store is implemented)
 
 }
 
@@ -70,31 +73,30 @@ func countSupport(data string) {
 		//everytime view handler is called, check the key and incrment
 		the appropriate values for that key.
 	*/
-	timeaccess := time.Now()	//get current time
 
 	data = data + " : " + timeaccess.Format("2006-01-02 15:04")		//format time to readable string and concatenate with content data
 
 	//check if the key already exist in map, if it does
-	if _, ok := contentMap[data]; ok {
+	if _, ok := counterMap[data]; ok {
 
 		//call the Incr_view function on the key counter, and store the value in DatView
-		DatView := Incr_view(contentMap[data])	
+		DatView := Incr_view(counterMap[data])	
 
 		//get the click value from the Key value
-		DatClick := contentMap[data].click
+		DatClick := counterMap[data].click
 
 		//to simiulate click calls
 		if rand.Intn(100) < 50 {
-			DatClick = Incr_click(contentMap[data])	//set DatClick to new click value, returned by Incr_click
+			DatClick = Incr_click(counterMap[data])	//set DatClick to new click value, returned by Incr_click
 		}
 
 		//update Value for the Key
-		contentMap[data] = counters{view : DatView, click : DatClick}
+		counterMap[data] = counters{view : DatView, click : DatClick}
 		
 	}else {	//if key doesn't exist
 
 		//initialize a new key value pair
-		contentMap[data] = counters{ view : 1, click : 1}
+		counterMap[data] = counters{ view : 1, click : 0}
 
 	}
 	
@@ -143,25 +145,39 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var Limit = 10
-
-var timer = time.NewTimer(time.Minute)
 
 func isAllowed() bool {
 
-	for Limit >= 0 {
-		Limit--
-
-		if Limit == 0 {
-			return false
-		}
-	}
-	fmt.Println(Limit)
 	return true
 }
 
+var i = 0	// set variable i to 0, after one uploadCounter call i should always = 1
+
 func uploadCounters() error {
+	//attempt to open a file, that will be used to store the counters
+	file, err := os.OpenFile("counterstore.txt", os.O_APPEND | os.O_CREATE | os.O_WRONLY, 0644)
+	//check to see if an error occured 
+	if err != nil {
+		panic(err)
+	}
+
+	if i == 0{
+		file.WriteString("----------------------Counter Store Content-----------------------\n\n")
+		i = 1
+	}
+	//let the user know what time the datastore was updated
+	file.WriteString("-----------Uploaded at : " + timeaccess.Format("2006-01-02 15:04")+ "--------------\n\n")
+
+	//iterate through map contents, getting the key and value and write to store
+	for key, value := range counterMap {
+
+		file.WriteString( " Key: '" + key + "' Value : { views : " + strconv.Itoa(value.view) + " clicks : " + strconv.Itoa(value.click) + " }\n\n")
+		time.Sleep(time.Second)	//simulate large data set upload
+
+	}
+	
 	return nil
+	
 }
 
 
@@ -173,7 +189,7 @@ func printMapContents() {
 
 	fmt.Println("----------------------Map Contents-------------------------\n")
 	//iterate through map contents, getting the key and value
-	for key, value := range contentMap {
+	for key, value := range counterMap {
 		i++	//incrment i for each row of map contents
 		fmt.Println( strconv.Itoa(i) + " Key: '" + key + "' Values : { views : " + strconv.Itoa(value.view) + " clicks : " + strconv.Itoa(value.click) + " }\n")
 	}
