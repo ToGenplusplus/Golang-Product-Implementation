@@ -152,6 +152,7 @@ func isAllowed() bool {
 }
 
 var i = 0	// set variable i to 0, after one uploadCounter call i should always = 1
+var PreviousUploadTime = timeaccess.Format("2 Jan 2006 15:04:05") //keep track of last upload to data store
 
 func uploadCounters() error {
 	//attempt to open a file, that will be used to store the counters
@@ -162,20 +163,25 @@ func uploadCounters() error {
 	}
 
 	if i == 0{
-		file.WriteString("----------------------Counter Store Content-----------------------\n\n")
+		file.WriteString("---COUNTER STORE CONTENT---\n\n")
 		i = 1
 	}
-	//let the user know what time the datastore was updated
-	file.WriteString("-----------Uploaded at : " + timeaccess.Format("2006-01-02 15:04")+ "--------------\n\n")
+	//let the user know time and date the datastore was updated
+	UploadTime := timeaccess.Format("2 Jan 2006 15:04:05")
+
+	file.WriteString("Prev Upload:" + PreviousUploadTime + "-----------Current: " + UploadTime+ "--------------\n\n")
 
 	//iterate through map contents, getting the key and value and write to store
 	for key, value := range counterMap {
 
 		file.WriteString( " Key: '" + key + "' Value : { views : " + strconv.Itoa(value.view) + " clicks : " + strconv.Itoa(value.click) + " }\n\n")
-		time.Sleep(time.Second)	//simulate large data set upload
+		//time.Sleep(time.Second)	//simulate large data set upload
 
 	}
 	
+	//set previous upload time, to the most recent upload time for next call
+	PreviousUploadTime = UploadTime	
+
 	return nil
 	
 }
@@ -192,10 +198,11 @@ func printMapContents() {
 	for key, value := range counterMap {
 		i++	//incrment i for each row of map contents
 		fmt.Println( strconv.Itoa(i) + " Key: '" + key + "' Values : { views : " + strconv.Itoa(value.view) + " clicks : " + strconv.Itoa(value.click) + " }\n")
-	}
-
-	
+	}	
 }
+
+
+
 func main() {
 	http.HandleFunc("/", welcomeHandler)
 	http.HandleFunc("/view/", viewHandler)
