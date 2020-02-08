@@ -4,16 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strings"		//func Contains(s, substr)
 	"sync"
 	"time"
 	"strconv"		//used for any conversion between string and ints
 )
-
-/*
-	function to retrive counters by content
-	funciton to retrieve counters by timestamp
-	
-*/
 
 type counters struct {
 	sync.Mutex
@@ -28,12 +23,13 @@ var (
 
 	counterMap = make(map[string]counters)	//data structure to hold counters as values and data content as key.
 
-	timeaccess = time.Now()	//get current time
 )
+
 
 func welcomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Welcome to EQ Works 😎")
 }
+
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	data := content[rand.Intn(len(content))]
@@ -75,6 +71,7 @@ func countSupport(data string) {
 		//everytime view handler is called, check the key and incrment
 		the appropriate values for that key.
 	*/
+	timeaccess := time.Now()	//get current time
 
 	data = data + " : " + timeaccess.Format("2006-01-02 15:04")		//format time to readable string and concatenate with content data
 
@@ -105,10 +102,46 @@ func countSupport(data string) {
 	
 }
 
+/*
+
+This functions takes in a string representing either, a content or timestamp or both
+representing portion of the key(or whole key) associated with a counter/counters
+and prints out the counters if the key exist in map.
+
+*/
+
+func RecieveCounters(content string) {
+	//check to make sure counters are availble 
+
+	if len(counterMap) != 0{
+
+		found := 0	//keep track of # of matches for specified content(key)
+
+		for key, value := range counterMap {
+
+			//check to see if the paramter passes in exist as part of a key or whole key in map
+			if strings.Contains(key,content) {
+				found++	//incrment found 
+				fmt.Println(" Key: '" + key + "' Values : { views : " + strconv.Itoa(value.view) + " clicks : " + strconv.Itoa(value.click) + " }\n")
+			}
+		}
+		//if found = 0 that means, no key was found for the paramter passed in
+
+		if found == 0{
+				fmt.Println("No counters for specified content")
+		}
+
+	}else{	//let the users know no counters are available yet
+		fmt.Println("There are no counters yet")
+	}
+
+}
+
 /**
 Function takes in a counter as a paramter, and increments the view value of counter
 returns the new view value
 **/
+
 func Incr_view(count counters) int {
 	count.Lock()
 	count.view++
@@ -130,6 +163,7 @@ func processClick(data string) error {
 Function takes in a counter as a paramter, and increments the click value of counter
 returns the new click value. (will only be called by above countSuport function)
 **/
+
 func Incr_click(count counters) int {
 
 	count.Lock()
@@ -156,14 +190,22 @@ func isAllowed() bool {
 
 /**
 Function displays a formated output of the contents in map to the terminal
+(implemented as a go routine)
 **/
 func printMapContents() {
-	i := 0	//intialize variable i will track # of contents in map
+	for {
 
-	fmt.Println("----------------------Map Contents-------------------------")
-	//iterate through map contents, getting the key and value
-	for key, value := range counterMap {
-		i++	//incrment i for each row of map contents
-		fmt.Println( strconv.Itoa(i) + " Key: '" + key + "' Values : { views : " + strconv.Itoa(value.view) + " clicks : " + strconv.Itoa(value.click) + " }\n")
-	}	
+		time.Sleep(10 * time.Second)	//run every 10 seconds
+
+		i := 0	//intialize variable i will track # of contents in map
+
+		fmt.Println("----------------------Map Contents-------------------------")
+		//iterate through map contents, getting the key and value
+		for key, value := range counterMap {
+			i++	//incrment i for each row of map contents
+			fmt.Println( strconv.Itoa(i) + " Key: '" + key + "' Values : { views : " + strconv.Itoa(value.view) + " clicks : " + strconv.Itoa(value.click) + " }\n")
+		}
+
+	}
+		
 }
