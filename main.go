@@ -38,7 +38,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 	c.view++
 	c.Unlock()
 
-	countSupport(data)	//call the support function to update counters as needed
+	countSupport(data)	//call the support function to update counters and populate counterMap
 
 	err := processRequest(r)
 	if err != nil {
@@ -51,7 +51,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 		processClick(data)
 	}
 
-	uploadCounters()	// to track current contents in map ( will remove once data store is implemented)
+	//uploadCounters()	// to track current contents in map ( will remove once data store is implemented)
 
 }
 
@@ -163,13 +163,15 @@ func uploadCounters() error {
 	}
 
 	if i == 0{
-		file.WriteString("---COUNTER STORE CONTENT---\n\n")
+
+		file.WriteString("---COUNTER STORE CONTENT---\n\n")	//should be displayed at beginning of data store (only once)
 		i = 1
 	}
 	//let the user know time and date the datastore was updated
 	UploadTime := timeaccess.Format("2 Jan 2006 15:04:05")
 
 	file.WriteString("Prev Upload:" + PreviousUploadTime + "-----------Current: " + UploadTime+ "--------------\n\n")
+	file.WriteString("\n\n")
 
 	//iterate through map contents, getting the key and value and write to store
 	for key, value := range counterMap {
@@ -200,7 +202,6 @@ func printMapContents() {
 		fmt.Println( strconv.Itoa(i) + " Key: '" + key + "' Values : { views : " + strconv.Itoa(value.view) + " clicks : " + strconv.Itoa(value.click) + " }\n")
 	}	
 }
-
 
 
 func main() {
