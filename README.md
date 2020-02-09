@@ -1,3 +1,3 @@
 Make sure go is installed.
->go build
-./executablefile
+$>go build
+$>./executablefile
