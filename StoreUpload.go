@@ -11,10 +11,10 @@ var timeaccess = time.Now()
 
 var PreviousUploadTime = timeaccess.Format("2 Jan 2006 15:04:05") //keep track of last upload to data store
 
-func uploadCounters() error {
+func uploadCounters() {
 	for {
 
-		time.Sleep(10 * time.Second)
+		time.Sleep(5 * time.Second)
 			//attempt to open a file, that will be used to store the counters
 		file, err := os.OpenFile("counterstore.txt", os.O_APPEND | os.O_CREATE | os.O_WRONLY, 0644)
 		//check to see if an error occured 
@@ -38,8 +38,7 @@ func uploadCounters() error {
 			//time.Sleep(time.Second)	//simulate large data set upload
 
 		}
-
-		return nil
+		
 	}
 	
 }
