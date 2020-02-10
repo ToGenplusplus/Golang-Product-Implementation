@@ -158,10 +158,8 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	RateLimit.Lock()
 	RateLimit.RequestConsumed++		//everytime /stats/ path is accesed decement incrment consumed counter
 	defer RateLimit.Unlock()
-	fmt.Fprintln(w,ReqAllowed)
 
 	//ReqAllowed is varaibale in GlobalLimit.go, will be set to false if limit is reached 
-	//not working properly
 	if !ReqAllowed {
 		w.WriteHeader(429)
 		return
